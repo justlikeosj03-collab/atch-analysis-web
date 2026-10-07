@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>주식 분석 대시보드</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<h1>주식 분석 대시보드</h1>
+
+<h2>예측</h2>
+<p id="predictionStatus">예측 데이터를 불러오는 중...</p>
+
+<div class="stats">
+  <div>
+    <b>현재값</b>
+    <strong id="current">-</strong>
+  </div>
+  <div>
+    <b>예측값</b>
+    <strong id="prediction">-</strong>
+  </div>
+  <div>
+    <b>예측 변화율</b>
+    <strong id="change">-</strong>
+  </div>
+</div>
+
+<h2>종합 신호</h2>
+<div class="stats">
+  <div>
+    <b>신호</b>
+    <strong id="signalValue">데이터 대기</strong>
+  </div>
+  <div>
+    <b>점수</b>
+    <strong id="signalScore">-</strong>
+  </div>
+  <div>
+    <b>RSI</b>
+    <strong id="rsiValue">-</strong>
+  </div>
+</div>
+
+<p id="rsiStatus">RSI 데이터 대기</p>
+
+<h2>거래량</h2>
+<p id="volumeStatus">거래량 데이터가 있으면 20일 평균 및 거래량 스파이크를 계산합니다.</p>
+<canvas id="volumeChart" height="180"></canvas>
+
+<h2>필요한 데이터</h2>
+<p>
+이 복구본의 분석 JS는 <b>atch_stock_data.json</b>을 읽도록 되어 있습니다.
+기존 주가 원본 데이터 파일을 같은 폴더에 넣으면 RSI, 종합 신호, 거래량 분석이 연결됩니다.
+</p>
+
+<script>
+(function(){
+  fetch("atch_prediction.json")
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      document.getElementById("current").innerText =
+        Number(d.current).toFixed(6);
+      document.getElementById("prediction").innerText =
+        Number(d.prediction).toFixed(6);
+      document.getElementById("change").innerText =
+        Number(d.change).toFixed(2) + "%";
+      document.getElementById("predictionStatus").innerText =
+        "예측 데이터 정상 로드";
+    })
+    .catch(function(e){
+      console.error(e);
+      document.getElementById("predictionStatus").innerText =
+        "예측 데이터 로드 오류";
+    });
+})();
+
+function showSignal(){
+  if(!window.signalData) return;
+  document.getElementById("signalValue").innerText = window.signalData.signal;
+  document.getElementById("signalScore").innerText = window.signalData.score;
+  document.getElementById("rsiValue").innerText =
+    Number(window.signalData.rsi).toFixed(2);
+}
+
+function drawVolume(days){
+  var c=document.getElementById("volumeChart");
+  if(!c || !window.volumeData) return;
+  var ctx=c.getContext("2d");
+  var labels=window.volumeData.labels;
+  var values=window.volumeData.volume;
+  var start=Math.max(0, values.length-(days||365));
+  var v=values.slice(start);
+  if(!v.length) return;
+
+  ctx.clearRect(0,0,c.width,c.height);
+  var max=Math.max.apply(null,v)||1;
+  var w=c.width/v.length;
+  for(var i=0;i<v.length;i++){
+    var h=(v[i]/max)*(c.height-20);
+    ctx.fillRect(i*w,c.height-h,w-1,h);
+  }
+}
+
+function loadRecoveredScripts(){
+  var scripts=["volume.js","rsi.js","signal.js"];
+  scripts.forEach(function(src){
+    var s=document.createElement("script");
+    s.src=src;
+    s.async=false;
+    document.body.appendChild(s);
+  });
+}
+
+loadRecoveredScripts();
+</script>
+
+</body>
+</html>
