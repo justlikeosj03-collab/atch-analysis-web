@@ -1,9 +1,0 @@
-index.html
-style.css
-volume.js
-rsi.js
-signal.js
-atch_stock_data.json
-atch_prediction.json
-README.txt
-RESTORE_INFO.txt
